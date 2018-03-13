@@ -1,0 +1,37 @@
+import requests
+from bs4 import BeautifulSoup
+from urllib.request import urlretrieve
+import os 
+import time 
+
+if __name__ == '__main__':
+
+    #可先建立一个专门存放图片的目录文件夹
+    if 'images' not in os.listdir():
+        os.makedirs('images')
+
+    print('建立目录夹完成，开始下载图片！')
+
+    # 一个专题8页..
+    for  num in range(1, 9):
+        if num == 1:
+            url = 'http://www.27270.com/ent/meinvtupian/2017/223643.html'  
+        else:
+            url = 'http://www.27270.com/ent/meinvtupian/2017/223643_%d.html' % num
+
+        # 在此就不添加代理部分的了，添加可起到隐蔽的效果，在需要的场合应当添加上
+        re = requests.get(url=url)
+        # 之指定编码格式
+        re.encoding = 'GB2312'
+        # 用beautiful模块解析,具体可查看文档内容
+        bf = BeautifulSoup(re.text, 'lxml')
+        # 一页一张，用find方法
+        bf_html = bf.find('div', class_='articleV4Body')
+
+        # 在创建的目录下保存！
+        urlretrieve(url=bf_html.img.get('src'), filename='images/'+bf_html.img.get('alt') + '系列之%d.jpg' % num)
+        # 一秒一个步骤实行代码
+        time.sleep(1)
+        print('开始下载第%d张' % num)
+
+    print('下载完成!')
