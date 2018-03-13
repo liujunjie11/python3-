@@ -1,0 +1,41 @@
+'''
+    函数目标：
+    爬取动态网页的图片
+
+'''
+
+import requests
+import json
+from urllib.request import urlretrieve
+import os
+import time
+
+if __name__ == '__main__':
+    url = 'https://unsplash.com/napi/feeds/home'
+    '''
+
+    添加需要的代理:
+    authorization证书配置,有时网站需要此类的代理html信息才会出来...
+    json格式分析js页面的利器，有时用js渲染出来的页面，要注意观察其URL及相对准确的信息
+
+    '''
+    header = {'user-agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36',
+            'authorization':'Client-ID c94869b36aa272dd62dfaeefed769d4115fb3189a9xxxxxxxxxxx'}
+    re = requests.get(url=url, headers=header)
+    re.encoding = 'utf-8'
+    # 通过分析易知一页有包括多张图片的ID链接，可用python的json格式处理解析
+    json_info = json.loads(re.text)
+
+    # 建立一个空的列表用于装ID信息
+    list_id = []
+    if '优美图片集' not in os.listdir():
+        os.makedirs('优美图片集')
+    for each in json_info['photos']:
+        list_id.append(each['id'])
+
+    # 利用urlretrieve函数一一下载，设置延迟
+    for i in range(0, len(list_id)):
+        print('开始下载指定页面中的第%d张' % (i + 1))
+        urlretrieve(url='https://unsplash.com/photos/' + list_id[i] + '/download?force=true.jpg', filename='优美图片集/' + '系列%d.jpg' % i)
+
+    print('下载完成！请查收...')    
