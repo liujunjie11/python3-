@@ -1,0 +1,28 @@
+import requests
+import re 
+
+if __name__ == '__main__':
+
+    # 登陆页面url
+    url = 'http://60.219.165.24//bxqcjcxAction.do'
+    # 设置代理相关
+    headers = {
+            'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36',
+            'Cookie':'JSESSIONID=xxxxxxxxxxx_gUJ4aiw',
+            'Connection': 'keep-alive'
+             }
+
+    # 利用session爬取请求,之后可方便的get与post
+    s = requests.session()
+    response = s.post(url=url, headers=headers)
+    # 设置成网页对应的编码格式
+    response.encoding = 'GB2312'
+
+    # 设置成为符合需要的表达式以及模式为'任意匹配模式'
+    pattern = re.compile('<tr.*?class="even".*?</td>.*?</td>.*?<td align="center">(.*?)</td>.*?&npsb;.*?</td>.*?</td>.*?</td>.*?<td>align="center">(.*?)&npsb;</P></td>.*?&npsb;</P>',                             re.S)
+    # 成绩信息采集
+    grades = re.findall(pattern, response.text)
+
+    # 输出对应的课程信息
+    for each_grades in grades:
+        print('课程名称：' + each_grades[0] + '分数：' + each_grades[1])
