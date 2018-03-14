@@ -1,0 +1,6 @@
+from urllib.request import urlretrieve 
+
+if __name__ == '__main__':
+    print('开始下载...')
+    urlretrieve(url='http://players.brightcove.net/4802324430001/H1dr7zTWz_default/index.html?videoId=5750255765001.mp4', filename='两会小视频.mp4')
+    print('下载完成！')
