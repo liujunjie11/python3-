@@ -1,0 +1,123 @@
+'''
+
+    函数目标：
+    爬取QQ音乐列表音乐
+    
+    编写时间：
+    2018-3-15
+
+'''
+
+import requests
+import os 
+import time
+import json 
+from urllib.request import urlretrieve
+
+if __name__ == '__main__':
+    
+    # 建立目录用于装爬取的音乐
+    if 'QQ音乐列表音乐' not in os.listdir():
+        os.makedirs('QQ音乐列表音乐')
+    
+    '''
+        从URL中添加代理记忆必要的相关的参数以获取歌曲的ID以及歌曲名
+                                                            '''
+    playlist_url = 'https://c.y.qq.com/qzone/fcg-bin/fcg_ucc_getcdinfo_byids_cp.fcg'
+    # 添加页面中的代理信息
+    header = {'user-agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36',
+            'cookie':'tvfe_boss_uuid=1770396a4ed2d111; pgv_info=ssid=s4189101616; pgv_pvid=7344469728; uin=; pgv_pvi=8737627136; pgv_si=s9378960384; _tucao_userinfo=ZU1hSHhlWVNPSnRoNWgwTjMzc2c4OVYzYjBuTkNjcDNHNjcyVkkzWm9WUkJZMWhxWDJ5SmpTSURFWDhVTk9TYkczU3JWc09EeEsrMEVnQ2RpK2FVNWh4M0x0Y21aOG5Vcms5MW9odmt6ZXNxRWlmeE9PZzM0SlQ1YmVuM0xhRVpUaWh5d2REV2FZcHdQdWdNL0daWE9rTTM0MlFjc1VoaHhNVkh4bkNqbnBOMDN2MG1sOEkxc0dYNFZRa24rd0RY--FeceGG8ErqgRGZz7WWwpsg%3D%3D; _tucao_session=WUVSc2RVVk95Y0ViU2NoNndsWmVlbzZoSG1WaFdpcEk4Q1M5bXZSTG9qanV3OEpuNVNQT3dBc0tBRERUY1NCRDZJek14Y2xYeFdmMWhiaWdkZ282UjdPdXVyT1ZYQnpCeG9BcklQUFBEMU5LQ3F3ajdmd3VWRmZ5QTJoN1ViS1krcEx0aUdUb3plckVNVGc3K0t2Z3pUeFJDcFZMNnU3dEpLUXZ5Zyt4dUpJdU5Hb3ZwZUhpTHM0OEhNQk0vcHJKN2tEOXVZay95WkFpZlFuSVBQZDhoSzlMVUMrVDQxN0llRzJuNkVWUGdTVjdyaVl2WVdscFlyVDJPald4MG9BWA%3D%3D--dDBBK5gXjLaGccOBzx4EBA%3D%3D; ts_refer=www.google.com/; ts_uid=3146042580; qqmusic_fromtag=66; yq_playdata=s; yqq_stat=0; yplayer_open=1; yq_index=0; yq_playschange=0; player_exist=1',
+            'referer':'https://y.qq.com/n/yqq/playlist/3766176211.html'}
+    
+    # 添加参数信息,有些是非必须的，待研究，有兴趣的可以自己测试
+    paramter = {
+                'type':'1',
+                'json':'1',
+                'utf8':'1',
+                'onlysong':'0',
+                'disstid':'3766176211',
+                'format':'jsonp',
+                'g_tk':'5381',  # 非必须
+                'jsonpCallback':'playlistinfoCallback',  # 值可更改
+                'loginUin':'0',
+                'hostUin':'0',
+                'format':'jsonp',
+                "inCharset":'utf8',
+                'outCharset':'utf-8',
+                'notice':'0',
+                'platform':'yqq',
+                'needNewCode':'0',
+                }
+    
+    playlist_re = requests.get(url=playlist_url, params=paramter, headers=header)
+    # 指定编码格式
+    playlist_re.encoding = 'utf-8'
+    # 改变为python可识别的json格式,进行必要的数据清洗,去掉前面的'jsonpCallback'部分
+    playlist_info = json.loads(playlist_re.text.lstrip('playlistinfoCallback(').rstrip(')'))
+    # 指定整体索引
+    playlist_info1 = playlist_info['cdlist'][0]
+    
+    # 先存储歌手的姓名,观察可知，一共有19个索引,因为歌曲本身仅仅有20首，取前20个歌手名
+    singer_name = []
+    for num in range(0, 17):
+        singer_eainfo = playlist_info1['songlist'][num]
+        for each_info in singer_eainfo['singer']:
+            singer_name.append(each_info['name'])
+    
+    num = 0
+    # 在循环体系中进行下一步的编写
+    for each in playlist_info1['songlist']:
+        
+        '''
+            在获取歌曲vkey的主URL传入相关的参数得到相关的数据之后进行挖掘，得到vkey信息
+            其中的参数有些是不必要的，可自由修改，有些是必要的
+                                                               '''
+        
+        key_url = 'https://c.y.qq.com/base/fcgi-bin/fcg_music_express_mobile3.fcg'
+        # 传入相关的代理以及参数
+        header_1 = {'user-agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36',
+                  'referer':'https://y.qq.com/portal/player.html',
+                  'cookie':'tvfe_boss_uuid=1770396a4ed2d111; pgv_info=ssid=s4189101616; pgv_pvid=7344469728; uin=; pgv_pvi=8737627136; pgv_si=s9378960384; _tucao_userinfo=ZU1hSHhlWVNPSnRoNWgwTjMzc2c4OVYzYjBuTkNjcDNHNjcyVkkzWm9WUkJZMWhxWDJ5SmpTSURFWDhVTk9TYkczU3JWc09EeEsrMEVnQ2RpK2FVNWh4M0x0Y21aOG5Vcms5MW9odmt6ZXNxRWlmeE9PZzM0SlQ1YmVuM0xhRVpUaWh5d2REV2FZcHdQdWdNL0daWE9rTTM0MlFjc1VoaHhNVkh4bkNqbnBOMDN2MG1sOEkxc0dYNFZRa24rd0RY--FeceGG8ErqgRGZz7WWwpsg%3D%3D; _tucao_session=WUVSc2RVVk95Y0ViU2NoNndsWmVlbzZoSG1WaFdpcEk4Q1M5bXZSTG9qanV3OEpuNVNQT3dBc0tBRERUY1NCRDZJek14Y2xYeFdmMWhiaWdkZ282UjdPdXVyT1ZYQnpCeG9BcklQUFBEMU5LQ3F3ajdmd3VWRmZ5QTJoN1ViS1krcEx0aUdUb3plckVNVGc3K0t2Z3pUeFJDcFZMNnU3dEpLUXZ5Zyt4dUpJdU5Hb3ZwZUhpTHM0OEhNQk0vcHJKN2tEOXVZay95WkFpZlFuSVBQZDhoSzlMVUMrVDQxN0llRzJuNkVWUGdTVjdyaVl2WVdscFlyVDJPald4MG9BWA%3D%3D--dDBBK5gXjLaGccOBzx4EBA%3D%3D; ts_refer=www.google.com/; ts_uid=3146042580; qqmusic_fromtag=66; yq_playdata=s; yqq_stat=0; yq_index=0; yq_playschange=0; player_exist=1; ts_last=y.qq.com/n/yqq/playlist/3766176211.html; yplayer_open=1'}    
+        
+        paramter_1 = {
+                    'g_tk':'5381',  # 非必须
+                    'jsonpCallback':'MusicJsonCallback',  # 非必须，可更改
+                    "loginUin":'0',
+                    'hostUin':'0',
+                    'format':'json',
+                    'inCharset':'utf8',
+                    'outCharset':'utf-8',
+                    'notice':'0',
+                    'platform':"yqq",
+                    'needNewCode':'0',
+                    'cid':'205361747',  # 一致必须
+                    'callback':'MusicJsonCallback',  # 非必须，可更改
+                    'uin':'0',
+                    # 传入获取的信息
+                    'songmid':each['songmid'],
+                    'filename':'C400' + each['songmid'] + '.m4a',
+                    'guid':'7344469728'   
+                    }
+        
+        # 解析得到含有vkey的数据信息，然后进行清洗得到想要的信息
+        key_re = requests.get(url=key_url, params=paramter_1, headers=header_1)
+        # 指定编码格式
+        key_re.encoding = 'utf-8'
+        # 转换为python的json格式，进行简单的清洗
+        key_info = json.loads(key_re.text.lstrip('MusicJsonCallback(').rstrip(')'))
+        # 进一步的清洗
+        data_info = key_info['data']
+        items_info = data_info['items'][0]
+        
+        print('数据采集完成，开始下载任务...')
+        # 接下来就是可以下载了
+        urlretrieve(url='http://dl.stream.qqmusic.qq.com/C4000041FwTv0Ai3Ku.m4a?vkey=' + items_info['vkey'] + '&guid=7344469728&uin=0&fromtag=66.mp3', filename='QQ音乐列表音乐/' + each['songname'] + '.mp3')
+        
+        print('正在下载:' + singer_name[num] + '的' + each['songname'] + '!')
+        print('下载中....')
+        print('下载此歌曲完成！')
+        # 跳传到下一个歌手名
+        num = num + 1
+        time.sleep(1)
+        
+    print('全部下载完成，请在本过程目录下查收！')
