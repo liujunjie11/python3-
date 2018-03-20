@@ -1,0 +1,49 @@
+'''
+
+    函数目标：
+    将GitHub上的java热门的开源项目可视化
+
+    编写时间：
+    2018-3-19
+
+'''
+
+import requests
+from matplotlib import pyplot as plt
+import pygal
+from pygal.style import LightColorizedStyle as lcs, LightenStyle as ls
+
+
+if __name__ == '__main__':
+    #添加代理配置
+    url = 'https://api.github.com/search/repositories'
+    header = {'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.162 Safari/537.36',
+              'Connection': 'keep-alive'}
+
+    paramter = {'q': 'language:java',
+              'sort': 'stars'}
+    re = requests.get(url=url, params=paramter, headers=header)
+    # 将网页转化为python字典即用json()函数方法才可显示与网页内容一致！
+    re.encoding = 'utf-8'
+    js_cont = re.json()
+    item = js_cont['items']
+    star_count = []
+    names = []
+    full_names = []
+    for each in item:
+            star_count.append(each['stargazers_count'])
+            names.append(each['name'])
+            full_names.append(each['full_name'])
+    # 添加高亮颜色
+    my_style = ls('#333366', base_style=lcs)
+
+    # 添加相关的设置
+    my_config = pygal.Config()
+    my_config.label_font_size = 28
+
+    bar_chart = pygal.Bar(config=my_config, style=my_style, x_label_rotation=60, show_legend=False)
+    bar_chart.add('', star_count)
+    bar_chart.title = 'Java  projects stars on Github'
+    bar_chart.x_labels = names
+    # 保存至目录下的文件中
+    bar_chart.render_to_file('Java stars in Github.svg')
