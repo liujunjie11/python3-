@@ -1,0 +1,49 @@
+
+	'''
+	    函数目标：
+	    爬取猫眼电影的top100信息
+	    
+	    编写时间：
+	    2018-03-28
+	    
+	'''
+	
+	'''
+	import requests
+	import re
+	import json
+	
+	if __name__ == '__main__':
+
+    print('猫眼电影Top100信息如下：')
+    #循环10次，得出页面上的Top100的电影信息
+    for i in range(0, 10):
+        
+        url = "http://maoyan.com/board/4?"
+        header = {
+                'Host':'maoyan.com',
+                'Referer':'http://maoyan.com/board/4?offset=20',
+                'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36'}
+        
+        paramters = {
+                'offset': i * 10}
+        request_tasget = requests.get(url=url, headers=header, params=paramters)
+        request_tasget.encoding = 'utf-8'
+        
+        # 实际上应该考虑考虑网的问题...连不上就一般没有数据返回了，找一个字符作为接口之后利用万能表达式即可
+        infos_list = re.findall(
+        r'<dd>.*?board-index.*?>(.*?)</i>.*?alt.*?src="(.*?)".*?<a.*?>(.*?)</a>.*?"star">(.*?)</p>.*?"releasetime">(.*?)</p>.*?"integer">(.*?)</i>.*?"fraction">(.*?)</i>',
+        request_tasget.text, re.S)  # @UndefinedVariable
+        
+        #建立存储信息的字典
+        for each in infos_list:
+            yields = {
+                    'index':each[0],
+                    'image_info':each[1],
+                    'name':each[2],
+                    'actor':each[3].strip(),
+                    'time':each[4],
+                    'score':each[5] + each[6]
+                    }
+            print(yields)
+
