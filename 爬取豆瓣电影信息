@@ -1,0 +1,54 @@
+
+	'''
+	    函数目标：
+	    爬取豆瓣Top250的电影信息
+	    
+	    编写时间：
+	    2018-04-01
+	'''
+	
+	import requests
+	import re 
+	
+	if __name__ == '__main__':
+    
+    print('以下为豆瓣Top250的电影信息：')
+    
+    # 从页面可看到一共有十页，每页上有25个电影的信息
+    for i in range(0, 10):
+        
+        url = "https://movie.douban.com/top250?"
+        header = {
+                'Connection': 'keep-alive',
+                'Cookie': 'bid=x9ipkoKiQgw; _pk_ses.100001.4cf6=*; __utma=30149280.2001666009.1522587991.1522587991.1522587991.1; __utmb=30149280.0.10.1522587991; __utmc=30149280; __utmz=30149280.1522587991.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); __utma=223695111.1530785565.1522587991.1522587991.1522587991.1; __utmb=223695111.0.10.1522587991; __utmc=223695111; __utmz=223695111.1522587991.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); ll="118146"; _vwo_uuid_v2=D575771A914BC38B3B7D081C0A0296FDC|939d8f7fdff1f383a97d572dab39fa1a; _pk_id.100001.4cf6=1de732c7ac4dc22b.1522587990.1.1522588516.1522587990.; ct=y',
+                'Host': 'movie.douban.com',
+                'Referer': 'https://movie.douban.com/top250?start=25&filter=',
+                'Upgrade-Insecure-Requests': '1',
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36}'
+                 }
+        paramters = {
+                 'start': i * 25,
+                 'filter':'' 
+                 }
+      
+        tasget = requests.get(url=url, headers=header, params=paramters)
+        tasget.encoding = 'utf-8'
+        
+        # 匹配正则表达式
+        infos = re.findall(r'<li>.*?<em class="">(.*?)</em>.*?alt=.*?src="(.*?)".*?"title">(.*?)</span>.*?class="title">&nbsp;/&nbsp;(.*?)</span>.*?"other">&nbsp;/&nbsp;(.*?)</span>.*?<p class="">(.*?)&nbsp;&nbsp;&nbsp;(.*?)<br>(.*?)&nbsp;/&nbsp(.*?)&nbsp;/&nbsp(.*?)</p>.*?average">(.*?)</span>', tasget.text, re.S)  # @UndefinedVariable
+        
+        # 建立一个空字典用于存储相关的信息
+        for each in infos:
+            yields = {
+                'index':each[0],  # 排名
+                'img_info':each[1],  # 照片地址
+                'name':each[2].strip() + "/" + each[3].strip() + "/" + each[4].strip(),  # 影片名称
+                'director':each[5].strip(),  # 导演
+                'actor':each[6],  # 演员
+                'time_cy':each[7].strip() + each[8],  # 上演时间及地区
+                'type':each[9].strip(),  # 影片类型
+                'score':each[10]  # 评分
+                }
+            
+            print(yields)
+                
