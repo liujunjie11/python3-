@@ -1,0 +1,50 @@
+'''
+
+    函数说明：
+    利用抓包返回的信息直接爬取商品信息
+    
+    编写时间：
+    2018-04-08
+
+'''
+    
+import requests
+import re
+
+if __name__ == '__main__':
+    
+    # 设定爬取100页，实际上还要多...
+    pages = 100
+    for num in range(1, pages + 1):
+        
+        print('开始爬取第' + str(num) + '页内容...' + '\n' + '.' * 10)
+        url = 'https://s.taobao.com/api?_ksTS=1523191565870_226&callback=jsonp227&ajax=true&m=customized&stats_click=search_radio_all:1&q=macbookpro&p4ppushleft=1,48&ntoffset=4&s=36&imgfile=&initiative_id=staobaoz_20180408&bcoffset=' + str(num) + '&js=1&ie=utf8&rn=5bd3f39c2ca57f21abe4db8ca60ee49f'
+        # 代理信息
+        header = {
+                'cookie': 't=da97f7b09403e3340cd6d50780a9385e; cna=PoshExqPgw0CAQG9KdLV29qM; hng=CN%7Czh-CN%7CCNY%7C156; thw=cn; enc=MuF%2FWOzFnau5EcbgcPck31M%2FMhER8txA4ZnjdZI2Dt8xzHdAr%2FN4f0OsOD%2FUcrNpOZWIfEG0GSbPQ8C4U%2BU70A%3D%3D; mt=ci%3D-1_1; cookie2=1f17bf1dfa8b6cf01c17d0fe7306c672; v=0; _tb_token_=eaefe3a15f0bf; JSESSIONID=0BC0D7637EFFD50CA56F8A8F4E451813; isg=BD09zFTCO5bo0p_z6P-VaFHGTJ_3cnEiA2cTwf-D2RRsNl5oySop_Xqg5Wpwlonk',
+                'referer': 'https://s.taobao.com/search?q=macbookpro&imgfile=&js=1&stats_click=search_radio_all%3A1&initiative_id=staobaoz_20180408&ie=utf8&bcoffset=4&p4ppushleft=1%2C48&ntoffset=4&s=0',
+                'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36',
+                'x-requested-with': 'XMLHttpRequest'}
+        
+        responed = requests.get(url=url, headers=header)
+        # 指定编码格式
+        responed.encoding = 'utf-8'
+        
+        re_text = responed.text
+        '''
+            进入数据清洗与筛选阶段
+            因为转化json格式始终失败...所以改用正则表达式来进行匹配
+        '''
+        print('获取源代码成功，以下为相关商品的信息：')
+        target = re.findall(r'"raw_title":"(.*?)".*?"pic_url":"(.*?)".*?"view_price":"(.*?)".*?"item_loc":"(.*?)".*?"view_sales":"(.*?)".*?"user_id":"(.*?)".*?"nick":"(.*?)"', re_text, re.S)  # @UndefinedVariable
+        for each in target:
+            product = {
+                'shop_title':each[0],  # 店铺主题
+                'pic_url':'https:' + each[1],  # 店铺图片地址
+                'price':each[2],  # 价格
+                'sales_people':each[4],  # 购买人数
+                'shop_name':each[6],  # 店铺名称
+                'loc':each[3],  # 店铺所在地
+                'shop_url':'https://store.taobao.com/shop/view_shop.htm?user_number_id=' + each[5]  # 店铺URL地址
+                    }
+            print(product)
