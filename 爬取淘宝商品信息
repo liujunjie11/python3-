@@ -1,0 +1,89 @@
+'''
+	    函数目标：
+	    利用selenium的自动翻页进行爬去相关的内容
+	    
+	    编写时间：
+	    2018-04-07
+	'''
+	    
+	from selenium import webdriver
+	from selenium.webdriver.common.by import By
+	from selenium.webdriver.support import expected_conditions as EC
+	from selenium.webdriver.support.wait import WebDriverWait
+	from urllib.parse import quote
+	from pyquery import PyQuery as pq
+	 
+	browser = webdriver.Chrome('/Users/junjieliu/Downloads/小插件/chromedriver')
+	wait = WebDriverWait(browser, 10)
+	keys = 'macbookpro'
+	'''
+	    函数说明：实现自动化翻页。
+	    仅仅当需要时进行翻页的选项
+	    '''
+	
+	
+	def index_source(page):
+	    print('正在爬取第' + str(page) + '页内容..' + '\n' + '.' * 15)
+	    url = 'https://s.taobao.com/search?q=' + quote(keys)
+	    browser.get(url)
+	    
+	    # 果然页数大于1则自动翻页功能启动
+	    if page > 1:
+	        # 输入框定位
+	        input = wait.until(
+	            EC.presence_of_element_located((By.CSS_SELECTOR, '#mainsrp-pager div.form > input.input.J_Input')))
+	        
+	        # 确定按钮定位
+	        button = wait.until(
+	            EC.element_to_be_clickable((By.CSS_SELECTOR, '#mainsrp-pager div.form > span.btn.J_Submit')))
+	        # 清理，输入，点击一体化
+	        input.clear()
+	        input.send_keys(page)
+	        button.click()
+	        
+	    '''
+	    获取源代码，传入爬取数据的函数
+	    获取源代码过程：
+	    第一步确定为在那一页
+	    第二步确定爬取内容
+	    '''
+	    wait.until(
+	        EC.text_to_be_present_in_element((By.CSS_SELECTOR, '#mainsrp-pager li.item.active > span.num'), str(page)))
+	    wait.until(
+	        EC.presence_of_element_located((By.CSS_SELECTOR, '.m-itemlist .items .item')))
+	    
+	    print('获取本页源码成功，以下为相关的信息：' + '\n')
+	    get_product()
+	    
+	
+	'''
+	    函数说明：
+	    用pyquery爬取其中的商品内容
+	    '''
+	
+	
+	def get_product():
+	    html_source = browser.page_source
+	    doc = pq(html_source)
+	    items = doc('#mainsrp-itemlist .items .item').items()
+	    
+	    '''
+	        以下匹配内容可查看网页源代码可知
+	        '''
+	    for item in items:
+	        product_infos = {
+	            'img_url':'https:' + item.find('.pic .img').attr('data-src'),  # 店铺主图片地址
+	            'product_desc':item.find('.pic .img').attr('alt'),  # 商品描述
+	            'price':item.find('.price').text().replace('\n', ''),  # 价格
+	            'people':item.find('.deal-cnt').text(),  # 购买人数
+	            'shop_url':'https:' + item.find('.shop .shopname').attr('href'),  # 店铺信息
+	            'shop_name':item.find('.shop').text(),  # 店铺名称
+	            'shop_location':item.find('.location').text()  # 店铺所在地
+	            }
+	        
+	        print(product_infos)
+	
+	if __name__ == '__main__':
+		pages = 100  # 根据页面分析可知总共有100页的信息
+	    for num in range(1, pages + 1):
+	        index_source(num)     
