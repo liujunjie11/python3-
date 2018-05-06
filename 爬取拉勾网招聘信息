@@ -1,0 +1,90 @@
+"""
+
+函数目标：
+翻页爬取拉勾网的职位信息
+
+编写时间：
+2018-05-05
+
+"""
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.wait import WebDriverWait
+from pyquery import PyQuery as pq
+from urllib.parse import quote
+import requests
+import re
+import time
+ 
+# 启动对象驱动，并且设置预期的等待时间
+browser = webdriver.Chrome('/Users/junjieliu/Downloads/webdirver小插件/chromedriver')
+wait = WebDriverWait(browser, 10)
+ 
+ 
+def page_content(pages):
+    """
+    返回每一页的页面源代码，顾名知义，从URL中可知许多的筛选信息了，可自行选择，
+    在此仅以职位关键词职位作为输入。
+    """
+    print('-' * 10 + '正在爬取第' + str(pages) + '页的内容' + '.' * 6)
+    keyword = '数据分析师'  # 职位关键词
+    url = 'https://www.lagou.com/jobs/list_' + quote(keyword) + '?' + 'px=default&gx=实习&gj=&xl=本科&isSchoolJob=1&city=全国#filterBox' 
+     
+    browser.get(url)
+    if pages > 1:
+        # 如果页面数大于1页则启用自动翻页
+        next_botton = wait.until(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, '#s_position_list > div.item_con_pager > div > span.pager_next')))
+         
+        next_botton.click()
+    # 指定要爬取区域,非必须要写
+    wait.until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, '#s_position_list > ul > li.con_list_item')))
+    print('爬取此页源码成功！以下是本页一系列相关的内容：')
+    informations_save()
+     
+ 
+def informations_save():
+    """
+    一一进入内部URL，爬取详细的招聘信息！
+    """
+    source_code = browser.page_source
+    doc = pq(source_code)
+    url = re.findall(r'class="position_link".*?href="(.*?)"', source_code, re.S)  # @UndefinedVariable  
+    
+    for i in range(0, len(url)):
+           
+        header = {
+        'Connection': 'keep-alive',
+        'Host': 'www.lagou.com',
+        'Upgrade-Insecure-Requests': '1',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36'
+    }
+        response = requests.get(url=url[i], headers=header)
+        response.encoding = 'utf-8'
+        doc1 = pq(response.text)
+           
+        infor = {
+            'company':doc1.find('body > div.position-head > div > div.position-content-l > div > div.company').text(),  # 公司名称
+            'infor_url':doc1.find('#job_company > dt > a').attr('href'),  # 此公司详细介绍网站
+            'position':doc1.find('body > div.position-head > div > div.position-content-l > div > span.name').text(),  # 职位
+            'salary':doc1.find('body > div.position-head > div > div.position-content-l > dd > p:nth-child(1) > span.salary').text(),  # 工资
+            'locale':doc1.find('#job_detail > dd.job-address.clearfix > input[type="hidden"]:nth-child(6)').text().replace('/', ''),  # 地点
+            'place':doc1.find('#job_detail > dd.job-address.clearfix > div.work_addr').text(),  # 具体位置
+            'required':doc1.find('div.position-content-l > dd > p:nth-child(1) > span:nth-child(3)').text().replace('/', ''),  # 经验要求
+            'education':doc1.find('div.position-content-l > dd > p:nth-child(1) > span:nth-child(4)').text().replace('/', ''),  # 学历要求
+            'job_nature':doc1.find('div.position-content-l > dd > p:nth-child(1) > span:nth-child(5)').text().replace('/', ''),  # 工作性质
+            'attract':doc1.find('#job_detail > dd.job-advantage').text().replace('\n', ' '),  # 工作诱惑
+            'describe':doc1.find('#job_detail > dd.job_bt').text().replace('\n', ' ')  # 工作描述
+            
+        }
+       print(infor)
+     
+if __name__ == "__main__":
+     
+    pages = 6  # 总的页面数，从网页第一面就可知了，现在的这个数是为了测试用的
+    for i in range(1, pages + 1):
+        page_content(i)
+        time.sleep(20)
