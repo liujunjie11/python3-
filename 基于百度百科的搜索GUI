@@ -1,0 +1,108 @@
+import sys
+import urllib.request  
+from bs4 import BeautifulSoup
+import re
+from urllib.parse import quote 
+from PyQt5.QtWidgets import (QPushButton, QWidget, QLabel, QLineEdit, QTextEdit, QGridLayout, QApplication,
+    QComboBox)
+from PyQt5.QtCore import QCoreApplication
+
+
+class Example(QWidget): 
+
+    def __init__(self):
+        '''
+        初始化
+        '''
+        super().__init__()
+        self.initUI()
+
+    def baidu_baike(self, entry):  
+        '''
+        百度百科词条内容爬取代码
+        entry：词条
+        因为太懒了..所以爬取的代码没有自己写..
+        '''
+        url = 'https://baike.baidu.com/item/' + urllib.parse.quote(entry)
+        html = urllib.request.urlopen(url)  
+        content = html.read().decode('utf-8')
+        html.close()
+        # lxml器进行解析
+        soup = BeautifulSoup(content, "lxml")  
+        text = soup.find('div', class_="lemma-summary").children  # 簡介部分
+        intro_text = ''
+        # 数据爬取
+        for x in text:
+            word = re.sub(re.compile(r"<(.+?)>"), '', str(x))
+            words = re.sub(re.compile(r"\[(.+?)\]"), '', word)
+            intro_text += words
+
+        return intro_text  # 返回文本(str格式)
+
+    def intro_final(self, entry):  
+        '''
+        异常处理
+        '''
+        try:
+            return self.baidu_baike(entry)
+        except AttributeError:
+            return "词条定义不够清晰/词条目前未成立！"
+
+    def initUI(self):
+        # GUI布局及控件放置
+        search_label = QLabel("请输入搜索词条：")
+        search_item = QLineEdit()
+
+        combo = QComboBox(self)
+        combo.addItem("百度百科")
+        combo.addItem("维基百科(不可用)")
+        btn1 = QPushButton("开始搜索", self)
+        # shortcut快捷键的设置
+        btn1.setShortcut('return')
+        btn2 = QPushButton("清空", self)
+        btn2.setShortcut('esc')
+        btn3 = QPushButton('退出', self)
+        btn3.setShortcut('command+q')
+        btn3.setShortcut('Ctrl+q')
+        btn3.clicked.connect(QCoreApplication.instance().quit)
+
+        search_result = QTextEdit()
+        grid = QGridLayout()
+        grid.setSpacing(5)
+        grid.addWidget(search_label, 1, 0)
+        grid.addWidget(btn3, 2, 1)
+        grid.addWidget(search_item, 2, 0)
+        grid.addWidget(btn1, 3, 0)
+        grid.addWidget(btn2, 3, 1)
+        grid.addWidget(search_result, 4, 0, 5 , 0)
+
+        self.setLayout(grid)
+
+        # 信号机制的设置，定义为一个方法作为反映的对象，这里很好理解
+        def search():
+            '''
+            搜索信号反映的响应
+            '''
+            search_result.setText(self.intro_final(search_item.text()))
+
+        btn1.clicked.connect(search)
+
+        def clear():
+            '''
+            清空信号反映的响应
+            '''
+            search_result.setText("")
+            search_item.setText("")
+
+        btn2.clicked.connect(clear)
+
+        # 设置窗口大小
+        self.setGeometry(500, 150, 600, 500)
+        self.setWindowTitle("搜索引擎GUI")
+        self.show()
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    ex = Example()
+    sys.exit(app.exec_())
