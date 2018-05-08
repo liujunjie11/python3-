@@ -1,0 +1,142 @@
+'''
+Created on 2018年5月8日
+
+@author: junjieliu
+'''
+"""
+
+函数目标：
+基于有道的GUI搜索小工具
+
+编写时间：
+2018-5-08
+
+"""
+
+import time 
+import requests
+import hashlib
+import random
+import json
+import sys
+from PyQt5.QtCore import QCoreApplication
+from PyQt5.QtWidgets import (QPushButton, QWidget, QLabel, QLineEdit, QTextEdit, QGridLayout, QApplication,
+    QComboBox)
+
+
+class Example(QWidget):
+    
+    def __init__(self):
+        
+        super().__init__()
+        self.initUI()
+    
+    def save_translateResult(self, word):
+        """
+        本函数用于翻译结果的返回。
+        """
+        
+        r = str(int(time.time() * 1000 + random.randint(1, 10)))  # 模仿JS代码的仿写
+        S = 'fanyideskweb'
+        n = word
+        D = "ebSeFb%=XZ%T[KZ)c(sy!"  # 在完整的JS代码中可找到
+        
+        o = hashlib.md5((S + n + str(r) + D).encode('utf-8')).hexdigest()
+        
+        data = {
+            'i': word,
+            'from': 'AUTO',
+            'to': 'AUTO',
+            'smartresult': 'dict',
+            'client': S,
+            'salt': r,
+            'sign': o,
+            'doctype': 'json',
+            'version': '2.1',
+            'keyfrom': 'fanyi.web',
+            'action': 'FY_BY_REALTIME',
+            'typoResult': 'false'
+        }
+        url = 'http://fanyi.youdao.com/translate_o?smartresult=dict&smartresult=rule'
+        
+        # 在代理中需要加入cookies信息，否则会出现代码错误信息的返回
+        header = {
+            'Cookie': 'OUTFOX_SEARCH_USER_ID=xxxxxxxxxxxx OUTFOX_SEARCH_USER_ID_NCOO=132154936.07902834; JSESSIONID=aaa3TFIg-JJJN4xEog6mw; ___rl__test__cookies=1525691300664',
+            'Referer': 'http://fanyi.youdao.com/',
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36'
+        }
+        response = requests.post(url=url, headers=header, data=data)
+        response.encoding = 'utf-8'
+        
+        translateResult = json.loads(response.text)["translateResult"][0][0]['tgt']
+        return translateResult
+
+    def take_test(self, word):
+        """
+        本函数用于输出测试。
+        """
+        try:
+            return self.save_translateResult(word)
+        
+        except AttributeError:
+            return "输入点有误/输出出现问题！！"
+        
+    def initUI(self):
+        # 组件添加
+        combo = QComboBox(self)
+        combo.addItem('有道词典')
+        
+        label = QLabel("请输入:")
+        line = QLineEdit()
+        button_1 = QPushButton('开始翻译', self)
+        button_2 = QPushButton('退出', self)
+        button_3 = QPushButton('清空', self)
+        
+        result = QTextEdit()
+        
+        # 布局设置
+        grip = QGridLayout()
+        grip.setSpacing(4)
+        grip.addWidget(label, 1, 0)
+        grip.addWidget(line, 2, 0)
+        grip.addWidget(button_3, 2, 1)
+        grip.addWidget(button_1, 3, 0)
+        grip.addWidget(button_2, 3, 1)
+        grip.addWidget(result, 4, 0)
+        
+        self.setLayout(grip)
+        combo.move(500, 0)
+        
+        # 基于Macbook设置基本的快捷键以及推出程序的信号槽
+        button_1.setShortcut('return')
+        button_2.setShortcut('command+q')
+        button_2.clicked.connect(QCoreApplication.instance().quit)
+        button_3.setShortcut('esc')
+        
+        def translate():
+            """
+            本函数用于返回翻译按钮之后的结果输出！
+            """
+            result.setText(self.take_test(line.text()))
+
+        button_1.clicked.connect(translate)
+        
+        def clear():
+            """
+            本函数用于输入输出框的清空！
+            """
+            line.setText("")
+            result.setText("")
+
+        button_3.clicked.connect(clear)
+        
+        # 设置窗口大小
+        self.setGeometry(500, 150, 600, 500)
+        self.setWindowTitle("有道翻译小工具")
+        self.show()
+
+        
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    ex = Example()
+    sys.exit(app.exec_())
