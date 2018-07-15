@@ -1,8 +1,3 @@
-'''
-Created on 2018年5月8日
-
-@author: junjieliu
-'''
 """
 
 函数目标：
@@ -61,7 +56,7 @@ class Example(QWidget):
         
         # 在代理中需要加入cookies信息，否则会出现代码错误信息的返回
         header = {
-            'Cookie': 'OUTFOX_SEARCH_USER_ID=xxxxxxxxxxxx OUTFOX_SEARCH_USER_ID_NCOO=132154936.07902834; JSESSIONID=aaa3TFIg-JJJN4xEog6mw; ___rl__test__cookies=1525691300664',
+            'Cookie': 'OUTFOX_SEARCH_USER_ID=432464843@10.168.8.76; _ntes_nnid=25aff2b1480f17471ca1585f6f2f4293,1512024136653; OUTFOX_SEARCH_USER_ID_NCOO=132154936.07902834; JSESSIONID=aaa3TFIg-JJJN4xEog6mw; ___rl__test__cookies=1525691300664',
             'Referer': 'http://fanyi.youdao.com/',
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36'
         }
